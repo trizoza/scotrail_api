@@ -1,5 +1,5 @@
 const axios = require('axios')
-const mongodb = require('mongodb')
+const { saveService } = require('./db')
 
 const getTrainsFromStation = (stationCode) => (
     axios.get(`https://scotrail.pw/live/${stationCode}`)
@@ -26,7 +26,8 @@ const filterTrainsByDestination = (destination, services) => (
 const filterTrainsByThroughStation = (through, services) => {
     return Promise.all(services.map(({ id }) => getAllStationsById(id)))
     .then(allStationsServices => {
-        return allStationsServices.filter(({ stations }) => stations.find(({ Station }) => Station === through))
+        let filtered = allStationsServices.filter(({ stations }) => stations.find(({ Station }) => Station === through))
+        return filtered.map(service => service.id)
     })
     .catch(error => {
         console.log(error);
@@ -50,17 +51,35 @@ const getAllStationsById = (id) => (
     })
 )
 
+const findMatchingServices = (filteredIds, allServices) => {
+    let matches = []
+    filteredIds.forEach(id => {
+        allServices.forEach(service => {
+            if (service.id === id) {
+                matches.push(service)
+            }
+        })
+    })
+    return matches
+}
+
+let trainsGLQ, trainsEDI, trainsBathgate
+
 getTrainsFromStation('GLQ')
-.then(trainsGLQ => {
-    console.log('trainsGLQ', trainsGLQ)
+.then(trainsFromStation => {
+    console.log('trainsGLQ', trainsFromStation)
+    trainsGLQ = trainsFromStation
     return filterTrainsByDestination('Edinburgh', trainsGLQ)
 })
-.then(trainsEDI => {
-    console.log('trainsEDI', trainsEDI)
+.then(trainsByDestination => {
+    console.log('trainsEDI', trainsByDestination)
+    trainsEDI = trainsByDestination
     return filterTrainsByThroughStation('Bathgate', trainsEDI)
 })
 .then(trainsByThroughStation => {
     console.log('trainsByThroughStation ', trainsByThroughStation)
+    trainsBathgate = trainsByThroughStation
+    return findMatchingServices(trainsBathgate, trainsEDI)
 })
 .catch(error => {
     console.error(error)
