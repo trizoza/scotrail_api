@@ -1,5 +1,5 @@
 const axios = require('axios')
-const { saveService } = require('./db')
+const { saveServices } = require('./db')
 
 const getTrainsFromStation = (stationCode) => (
     axios.get(`https://scotrail.pw/live/${stationCode}`)
@@ -80,6 +80,11 @@ getTrainsFromStation('GLQ')
     console.log('trainsByThroughStation ', trainsByThroughStation)
     trainsBathgate = trainsByThroughStation
     return findMatchingServices(trainsBathgate, trainsEDI)
+})
+.then(matchingServices => {
+    console.log('matchingServices ', matchingServices)
+    saveServices(matchingServices)
+    return
 })
 .catch(error => {
     console.error(error)
