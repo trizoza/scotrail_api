@@ -56,6 +56,8 @@ const findMatchingServices = (filteredIds, allServices) => {
     filteredIds.forEach(id => {
         allServices.forEach(service => {
             if (service.id === id) {
+                service._id = id
+                delete service.id
                 matches.push(service)
             }
         })
@@ -83,9 +85,9 @@ getTrainsFromStation('GLQ')
 })
 .then(matchingServices => {
     console.log('matchingServices ', matchingServices)
-    saveServices(matchingServices)
-    return
+    saveServices(matchingServices) 
 })
 .catch(error => {
     console.error(error)
+    return
 })
